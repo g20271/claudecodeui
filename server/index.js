@@ -812,14 +812,31 @@ Agent instructions:`;
 });
 
 // Image upload endpoint
+// ログ出力用のヘルパー関数
+const logger = (message, ...args) => {
+    // タイムスタンプを付けて見やすくする
+    console.log(`[DEBUG ${new Date().toISOString()}]`, message, ...args.length > 0 ? args : '');
+};
+
+// Image upload endpoint
 app.post('/api/projects/:projectName/upload-images', authenticateToken, async (req, res) => {
+    // ログ関数 (これはあなたの環境に合わせてください)
+    const logger = (message, ...args) => console.log(`[UPLOADER] ${message}`, ...args);
+
+    logger(`リクエスト受信: ${req.method} ${req.originalUrl}`);
+    logger('プロジェクト名:', req.params.projectName);
+    logger('認証済みユーザーID:', req.user.id);
+
     try {
+        // --- 1. モジュールの動的インポート ---
+        logger('モジュールの動的インポートを開始します...');
         const multer = (await import('multer')).default;
         const path = (await import('path')).default;
-        const fs = (await import('fs')).promises;
+        const fs = (await import('fs')).promises; // promises版を利用
         const os = (await import('os')).default;
+        logger('モジュールのインポートが完了しました。');
 
-        // Configure multer for image uploads
+        // --- 2. Multer設定 ---
         const storage = multer.diskStorage({
             destination: async (req, file, cb) => {
                 const uploadDir = path.join(os.tmpdir(), 'claude-ui-uploads', String(req.user.id));
@@ -838,72 +855,77 @@ app.post('/api/projects/:projectName/upload-images', authenticateToken, async (r
             if (allowedMimes.includes(file.mimetype)) {
                 cb(null, true);
             } else {
-                cb(new Error('Invalid file type. Only JPEG, PNG, GIF, WebP, and SVG are allowed.'));
+                cb(new Error('Invalid file type.'), false);
             }
         };
 
         const upload = multer({
-            storage,
-            fileFilter,
+            storage: storage,
+            fileFilter: fileFilter,
             limits: {
                 fileSize: 5 * 1024 * 1024, // 5MB
                 files: 5
             }
         });
 
-        // Handle multipart form data
-        upload.array('images', 5)(req, res, async (err) => {
+        // --- 3. Multerミドルウェアの実行と後続処理 ---
+        const uploadMiddleware = upload.array('images', 5);
+
+        logger('Multerミドルウェアの実行を開始します...');
+        uploadMiddleware(req, res, async (err) => {
+            logger('Multerミドルウェアの処理が完了しました。');
             if (err) {
-                return res.status(400).json({ error: err.message });
+                logger('Multerミドルウェアでエラーが発生しました。', err);
+                if (err instanceof multer.MulterError) {
+                    return res.status(400).json({ message: 'Upload error: ' + err.message });
+                }
+                return res.status(400).json({ message: err.message });
             }
 
             if (!req.files || req.files.length === 0) {
-                return res.status(400).json({ error: 'No image files provided' });
+                logger('ファイルがアップロードされていません。');
+                return res.status(400).json({ message: 'No files were uploaded.' });
             }
+
+            logger('ファイルアップロードが成功しました。');
+            logger('アップロードされたファイル情報:', req.files.map(f => f.filename));
 
             try {
-                // Process uploaded images
-                const processedImages = await Promise.all(
-                    req.files.map(async (file) => {
-                        // Read file and convert to base64
-                        const buffer = await fs.readFile(file.path);
-                        const base64 = buffer.toString('base64');
-                        const mimeType = file.mimetype;
+                // --- ★★★ 修正箇所: レスポンスデータの作成 ★★★ ---
+                // アップロードされた各ファイルを読み込み、Data URIに変換する
+                const uploadedImagesData = await Promise.all(req.files.map(async (file) => {
+                    const fileBuffer = await fs.readFile(file.path);
+                    const base64String = fileBuffer.toString('base64');
+                    
+                    // 一時ファイルを削除
+                    await fs.unlink(file.path);
 
-                        // Clean up temp file immediately
-                        await fs.unlink(file.path);
+                    return {
+                        name: file.originalname,
+                        mimetype: file.mimetype,
+                        // Data URI形式で返す
+                        data: `data:${file.mimetype};base64,${base64String}`
+                    };
+                }));
 
-                        return {
-                            name: file.originalname,
-                            data: `data:${mimeType};base64,${base64}`,
-                            size: file.size,
-                            mimeType: mimeType
-                        };
-                    })
-                );
+                logger('クライアントへのレスポンスを返します...');
+                // フロントエンドの期待に合わせて 'images' キーで返す
+                res.status(200).json({
+                    message: 'Files uploaded successfully!',
+                    images: uploadedImagesData // ★★★ 修正箇所 ★★★
+                });
+                logger('リクエスト処理が正常に完了しました。');
 
-                res.json({ images: processedImages });
-            } catch (error) {
-                console.error('Error processing images:', error);
-                // Clean up any remaining files
-                await Promise.all(req.files.map(f => fs.unlink(f.path).catch(() => { })));
-                res.status(500).json({ error: 'Failed to process images' });
+            } catch (processingError) {
+                logger('ファイル処理中にエラー発生:', processingError);
+                res.status(500).json({ message: 'Error processing uploaded files.' });
             }
         });
-    } catch (error) {
-        console.error('Error in image upload endpoint:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
 
-// Serve React app for all other routes
-app.get('*', (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
-  } else {
-    // In development, redirect to Vite dev server
-    res.redirect(`http://localhost:${process.env.VITE_PORT || 3001}`);
-  }
+    } catch (error) {
+        logger('予期せぬエラーがルートハンドラ全体で発生しました！', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 // Helper function to convert permissions to rwx format

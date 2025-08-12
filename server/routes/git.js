@@ -6,14 +6,15 @@ import { promises as fs } from 'fs';
 import { extractProjectDirectory } from '../projects.js';
 
 const router = express.Router();
-const execAsync = promisify(exec);
+// const execAsync = promisify(exec);
+const execAsync = null;
 
 // Helper function to get the actual project path from the encoded project name
 async function getActualProjectPath(projectName) {
   try {
     return await extractProjectDirectory(projectName);
   } catch (error) {
-    console.error(`Error extracting project directory for ${projectName}:`, error);
+    //console.error(`Error extracting project directory for ${projectName}:`, error);
     // Fallback to the old method
     return projectName.replace(/-/g, '/');
   }
@@ -97,7 +98,7 @@ router.get('/status', async (req, res) => {
       untracked
     });
   } catch (error) {
-    console.error('Git status error:', error);
+    //console.error('Git status error:', error);
     res.json({ 
       error: error.message.includes('not a git repository') || error.message.includes('Project directory is not a git repository') 
         ? error.message 
@@ -148,7 +149,7 @@ router.get('/diff', async (req, res) => {
     
     res.json({ diff });
   } catch (error) {
-    console.error('Git diff error:', error);
+    //console.error('Git diff error:', error);
     res.json({ error: error.message });
   }
 });
@@ -177,7 +178,7 @@ router.post('/commit', async (req, res) => {
     
     res.json({ success: true, output: stdout });
   } catch (error) {
-    console.error('Git commit error:', error);
+    //console.error('Git commit error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -220,7 +221,7 @@ router.get('/branches', async (req, res) => {
     
     res.json({ branches });
   } catch (error) {
-    console.error('Git branches error:', error);
+    //console.error('Git branches error:', error);
     res.json({ error: error.message });
   }
 });
@@ -241,7 +242,7 @@ router.post('/checkout', async (req, res) => {
     
     res.json({ success: true, output: stdout });
   } catch (error) {
-    console.error('Git checkout error:', error);
+    //console.error('Git checkout error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -262,7 +263,7 @@ router.post('/create-branch', async (req, res) => {
     
     res.json({ success: true, output: stdout });
   } catch (error) {
-    console.error('Git create branch error:', error);
+    //console.error('Git create branch error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -313,7 +314,7 @@ router.get('/commits', async (req, res) => {
     
     res.json({ commits });
   } catch (error) {
-    console.error('Git commits error:', error);
+    //console.error('Git commits error:', error);
     res.json({ error: error.message });
   }
 });
@@ -337,7 +338,7 @@ router.get('/commit-diff', async (req, res) => {
     
     res.json({ diff: stdout });
   } catch (error) {
-    console.error('Git commit diff error:', error);
+    //console.error('Git commit diff error:', error);
     res.json({ error: error.message });
   }
 });
@@ -365,7 +366,7 @@ router.post('/generate-commit-message', async (req, res) => {
           combinedDiff += `\n--- ${file} ---\n${stdout}`;
         }
       } catch (error) {
-        console.error(`Error getting diff for ${file}:`, error);
+        //console.error(`Error getting diff for ${file}:`, error);
       }
     }
     
@@ -375,7 +376,7 @@ router.post('/generate-commit-message', async (req, res) => {
     
     res.json({ message });
   } catch (error) {
-    console.error('Generate commit message error:', error);
+    //console.error('Generate commit message error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -486,7 +487,7 @@ router.get('/remote-status', async (req, res) => {
       isUpToDate: ahead === 0 && behind === 0
     });
   } catch (error) {
-    console.error('Git remote status error:', error);
+    //console.error('Git remote status error:', error);
     res.json({ error: error.message });
   }
 });
@@ -520,7 +521,7 @@ router.post('/fetch', async (req, res) => {
     
     res.json({ success: true, output: stdout || 'Fetch completed successfully', remoteName });
   } catch (error) {
-    console.error('Git fetch error:', error);
+    //console.error('Git fetch error:', error);
     res.status(500).json({ 
       error: 'Fetch failed', 
       details: error.message.includes('Could not resolve hostname') 
@@ -569,7 +570,7 @@ router.post('/pull', async (req, res) => {
       remoteBranch
     });
   } catch (error) {
-    console.error('Git pull error:', error);
+    //console.error('Git pull error:', error);
     
     // Enhanced error handling for common pull scenarios
     let errorMessage = 'Pull failed';
@@ -636,7 +637,7 @@ router.post('/push', async (req, res) => {
       remoteBranch
     });
   } catch (error) {
-    console.error('Git push error:', error);
+    //console.error('Git push error:', error);
     
     // Enhanced error handling for common push scenarios
     let errorMessage = 'Push failed';
@@ -718,7 +719,7 @@ router.post('/publish', async (req, res) => {
       branch
     });
   } catch (error) {
-    console.error('Git publish error:', error);
+    //console.error('Git publish error:', error);
     
     // Enhanced error handling for common publish scenarios
     let errorMessage = 'Publish failed';
@@ -779,7 +780,7 @@ router.post('/discard', async (req, res) => {
     
     res.json({ success: true, message: `Changes discarded for ${file}` });
   } catch (error) {
-    console.error('Git discard error:', error);
+    //console.error('Git discard error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -814,7 +815,7 @@ router.post('/delete-untracked', async (req, res) => {
     
     res.json({ success: true, message: `Untracked file ${file} deleted successfully` });
   } catch (error) {
-    console.error('Git delete untracked error:', error);
+    //console.error('Git delete untracked error:', error);
     res.status(500).json({ error: error.message });
   }
 });

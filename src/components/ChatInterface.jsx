@@ -2045,6 +2045,8 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
     };
 
     const toolsSettings = getToolsSettings();
+    console.log("Hello!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    console.log(uploadedImages) // これがnullになる
 
     // Send command to Claude CLI via WebSocket with images
     sendMessage({

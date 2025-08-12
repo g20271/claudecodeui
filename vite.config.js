@@ -10,6 +10,8 @@ export default defineConfig(({ command, mode }) => {
     plugins: [react()],
     server: {
       port: parseInt(env.VITE_PORT) || 5173,
+      host: true, // 外部アクセスを許可
+      allowedHosts: ['claude.kusuwata.com', 'oj-claude.kusuwata.com'], // 許可ホスト名
       proxy: {
         '/api': `http://localhost:${env.PORT || 3001}`,
         '/ws': {

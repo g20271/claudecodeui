@@ -40,6 +40,7 @@ async function spawnClaude(command, options = {}, ws) {
     // Handle images by saving them to temporary files and passing paths to Claude
     const tempImagePaths = [];
     let tempDir = null;
+    console.log(images)
     if (images && images.length > 0) {
       try {
         // Create temp directory in the project directory so Claude can access it
@@ -68,7 +69,7 @@ async function spawnClaude(command, options = {}, ws) {
         // Include the full image paths in the prompt for Claude to reference
         // Only modify the command if we actually have images and a command
         if (tempImagePaths.length > 0 && command && command.trim()) {
-          const imageNote = `\n\n[Images provided at the following paths:]\n${tempImagePaths.map((p, i) => `${i + 1}. ${p}`).join('\n')}`;
+          const imageNote = ` [Images provided at the following paths:] ${tempImagePaths.map((p, i) => `${i + 1}. ${p}`).join(' ')}`;
           const modifiedCommand = command + imageNote;
           
           // Update the command in args - now that --print and command are separate
