@@ -1,0 +1,51 @@
+<service>
+  <id>claude-code-ui-server</id>
+  <name>Claude Code UI - Server</name>
+  <description>Build and run Claude Code UI server</description>
+
+  <!-- 作業ディレクトリをあなたのプロジェクトのルートに変更 -->
+  <workingdirectory>C:\Users\info\server-project\claudecodeui</workingdirectory>
+
+  <!-- 起動前に build -->
+  <!-- <onstart>
+    <exec program="%ProgramFiles%\nodejs\npm.cmd" arguments="ci" />
+    <exec program="%ProgramFiles%\nodejs\npm.cmd" arguments="run build" />
+  </onstart> -->
+
+  <!-- 常駐させる本体（Nodeサーバー） -->
+  <executable>node</executable>
+  <arguments>server/index.js</arguments>
+
+  <env name="NODE_ENV" value="production" />
+  <env name="USERPROFILE" value="C:\Users\info" />
+  <env name="HOME"        value="%USERPROFILE%" />
+  <env name="HOMEDRIVE"   value="C:" />
+  <env name="HOMEPATH"    value="\Users\info" />
+  <env name="PATH" value="%PATH%;C:\Users\info\AppData\Local\Microsoft\WinGet\Links\;C:\Users\info\AppData\Roaming\npm\;" />
+
+
+  <serviceaccount>
+    <!-- ドメインはローカルなら . か マシン名 -->
+    <domain>.</domain>
+    <user>kusuwata</user>
+    <password>kusu0367</password>
+    <!-- 必要なら「サービスとしてログオン」権限を自動付与 -->
+    <allowservicelogon>true</allowservicelogon>
+  </serviceaccount>
+
+  <!-- 自動起動 -->
+  <startmode>Automatic</startmode>
+
+  <!-- ログ設定：サイズ or 日付でローテーション。細切れ回避＆保持期間調整 -->
+  <logpath>%BASE%\logs</logpath>
+  <log mode="roll-by-size-time">
+    <sizeThreshold>1048576</sizeThreshold> <!-- 1MB -->
+    <pattern>yyyy-MM-dd</pattern>            <!-- 1日1ファイルペース -->
+    <keepFiles>14</keepFiles>                <!-- 14ファイル保持 -->
+  </log>
+
+  <!-- 安全停止・再起動ポリシー -->
+  <stoptimeout>20000</stoptimeout>
+  <restartDelay>5000</restartDelay>
+  <resetfailure>60</resetfailure>
+</service>

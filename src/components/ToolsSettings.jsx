@@ -275,14 +275,14 @@ function ToolsSettings({ isOpen, onClose, projects = [] }) {
         const settings = JSON.parse(savedSettings);
         setAllowedTools(settings.allowedTools || []);
         setDisallowedTools(settings.disallowedTools || []);
-        setSkipPermissions(settings.skipPermissions || false);
-        setProjectSortOrder(settings.projectSortOrder || 'name');
+        setSkipPermissions(settings.skipPermissions || true);
+        setProjectSortOrder(settings.projectSortOrder || 'date');
       } else {
         // Set defaults
         setAllowedTools([]);
         setDisallowedTools([]);
-        setSkipPermissions(false);
-        setProjectSortOrder('name');
+        setSkipPermissions(true);
+        setProjectSortOrder('date');
       }
 
       // Load MCP servers from API
@@ -292,8 +292,8 @@ function ToolsSettings({ isOpen, onClose, projects = [] }) {
       // Set defaults on error
       setAllowedTools([]);
       setDisallowedTools([]);
-      setSkipPermissions(false);
-      setProjectSortOrder('name');
+      setSkipPermissions(true);
+      setProjectSortOrder('date');
     }
   };
 

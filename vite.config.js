@@ -13,13 +13,13 @@ export default defineConfig(({ command, mode }) => {
       host: true, // 外部アクセスを許可
       allowedHosts: ['claude.kusuwata.com', 'oj-claude.kusuwata.com'], // 許可ホスト名
       proxy: {
-        '/api': `http://localhost:${env.PORT || 3001}`,
+        '/api': `http://localhost:${env.PORT || 3012}`,
         '/ws': {
-          target: `ws://localhost:${env.PORT || 3001}`,
+          target: `ws://localhost:${env.PORT || 3012}`,
           ws: true
         },
         '/shell': {
-          target: `ws://localhost:${env.PORT || 3002}`,
+          target: `ws://localhost:${env.PORT || 3012}`,
           ws: true
         }
       }
